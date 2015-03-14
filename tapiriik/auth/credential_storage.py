@@ -1,8 +1,9 @@
-from Crypto.Cipher import PKCS1_OAEP
+from Crypto.Cipher import PKCS1_OAEP, XOR
 from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA
 from Crypto import Random
 from tapiriik.settings import CREDENTIAL_STORAGE_PUBLIC_KEY, CREDENTIAL_STORAGE_PRIVATE_KEY
+from tapiriik.settings import REQUIRE_VALID_CREDENTIAL_STORAGE_KEYS
 import copy
 
 #### note about tapiriik and credential storage ####
@@ -13,8 +14,13 @@ import copy
 
 class CredentialStore:
     def Init():
-        _key = RSA.importKey(CREDENTIAL_STORAGE_PRIVATE_KEY if CREDENTIAL_STORAGE_PRIVATE_KEY else CREDENTIAL_STORAGE_PUBLIC_KEY)
-        CredentialStore._cipher = PKCS1_OAEP.new(_key)
+        try:
+            _key = RSA.importKey(CREDENTIAL_STORAGE_PRIVATE_KEY if CREDENTIAL_STORAGE_PRIVATE_KEY else CREDENTIAL_STORAGE_PUBLIC_KEY)
+            CredentialStore._cipher = PKCS1_OAEP.new(_key)
+        except:
+            if REQUIRE_VALID_CREDENTIAL_STORAGE_KEYS:
+                raise
+            CredentialStore._cipher = XOR.new('\xff')
 
     def Encrypt(cred):
         data = CredentialStore._cipher.encrypt(cred.encode("UTF-8"))

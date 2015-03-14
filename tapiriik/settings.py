@@ -109,6 +109,7 @@ SECRET_KEY = 'vag26gs^t+_y0msoemqo%_5gb*th(i!v$l6##bq9tu2ggcsn13'
 # In production, webservers must have only the public key
 CREDENTIAL_STORAGE_PUBLIC_KEY = b"NotTheRealKeyFYI"
 CREDENTIAL_STORAGE_PRIVATE_KEY = None
+REQUIRE_VALID_CREDENTIAL_STORAGE_KEYS = True
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
