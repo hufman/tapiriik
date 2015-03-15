@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+import docker_links
 # Django settings for tapiriik project.
 
 DEBUG = True
@@ -328,8 +329,22 @@ for var in list(globals()):
         if var in os.environ:
             globals()[var] = os.environ[var]
 
+# load any docker links as defaults for data resources
+links = docker_links.parse_links(os.environ)
+for possible_link_name in ['amqp', 'rabbitmq']:
+    if possible_link_name in links:
+        RABBITMQ_HOST = links[possible_link_name]['hostname']
+        RABBITMQ_PORT = str(links[possible_link_name]['port'])
+for possible_link_name in ['mongo', 'mongodb']:
+    if possible_link_name in links:
+        MONGO_HOST = links[possible_link_name]['hostname']
+for possible_link_name in ['redis', 'redisdb']:
+    if possible_link_name in links:
+        REDIS_HOST = links[possible_link_name]['hostname']
+
 # construct the DEFAULT_RABBITMQ_BROKER_URL
 # it will include any env-given RABBITMQ_* parameters
+# and any docker links
 _BROKER_FORMAT = "amqp://{user}{passcolon}{password}@{host}:{port}/{vhost}"
 DEFAULT_RABBITMQ_BROKER_URL = _BROKER_FORMAT.format(
     user=RABBITMQ_USERNAME,
@@ -347,4 +362,6 @@ if not RABBITMQ_BROKER_URL:
 
 # clean up temporary variables
 del var
+del links
+del possible_link_name
 del _BROKER_FORMAT
