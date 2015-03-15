@@ -311,8 +311,40 @@ WORKER_INDEX = int(os.environ.get("TAPIRIIK_WORKER_INDEX", 0))
 
 HTTP_SOURCE_ADDR = "0.0.0.0"
 
-RABBITMQ_BROKER_URL = "amqp://guest@localhost//"
+RABBITMQ_USERNAME = "guest"
+RABBITMQ_PASSWORD = ""
+RABBITMQ_HOST = "localhost"
+RABBITMQ_PORT = "5672"
+RABBITMQ_VHOST = "/"
+RABBITMQ_BROKER_URL = None  # unset, override with env or it will be constructed
 
 GARMIN_CONNECT_USER_WATCH_ACCOUNTS = {}
 
 from .local_settings import *
+
+# Try to load variables from env
+for var in list(globals()):
+    if var.isupper():   # a config value
+        if var in os.environ:
+            globals()[var] = os.environ[var]
+
+# construct the DEFAULT_RABBITMQ_BROKER_URL
+# it will include any env-given RABBITMQ_* parameters
+_BROKER_FORMAT = "amqp://{user}{passcolon}{password}@{host}:{port}/{vhost}"
+DEFAULT_RABBITMQ_BROKER_URL = _BROKER_FORMAT.format(
+    user=RABBITMQ_USERNAME,
+    passcolon=":" if RABBITMQ_PASSWORD else "",
+    password=RABBITMQ_PASSWORD,
+    host=RABBITMQ_HOST,
+    port=RABBITMQ_PORT,
+    vhost=RABBITMQ_VHOST
+)
+
+# if the user env didn't override RABBITMQ_BROKER_URL,
+# use the calculated default
+if not RABBITMQ_BROKER_URL:
+    RABBITMQ_BROKER_URL = DEFAULT_RABBITMQ_BROKER_URL
+
+# clean up temporary variables
+del var
+del _BROKER_FORMAT
